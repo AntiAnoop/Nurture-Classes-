@@ -5,11 +5,30 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Clean standard way for Vite to read env variables
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// ==========================================
+// 1. BULLETPROOF ENVIRONMENT VARIABLE DUMP
+// ==========================================
+let SUPABASE_URL = '';
+let SUPABASE_ANON_KEY = '';
+
+try {
+  // Safe extraction for both build-time (Node) and runtime (Browser)
+  SUPABASE_URL = (import.meta.env?.VITE_SUPABASE_URL) || (process.env?.VITE_SUPABASE_URL) || '';
+  SUPABASE_ANON_KEY = (import.meta.env?.VITE_SUPABASE_ANON_KEY) || (process.env?.VITE_SUPABASE_ANON_KEY) || '';
+} catch (e) {
+  console.warn("Context evaluation warning (safe to ignore during build phase):", e);
+}
 
 const isUrlValid = SUPABASE_URL.startsWith('http://') || SUPABASE_URL.startsWith('https://');
+
+// ==========================================
+// 2. DIAGNOSTIC SYSTEM CHECK LOGGER
+// ==========================================
+console.log("=== NURTURE CLIENT DIAGNOSTIC DUMP ===");
+console.log("URL Found:", SUPABASE_URL ? "YES (Starts with " + SUPABASE_URL.substring(0, 8) + ")" : "NO (EMPTY)");
+console.log("Key Found:", SUPABASE_ANON_KEY ? "YES" : "NO (EMPTY)");
+console.log("URL Format Valid:", isUrlValid);
+console.log("======================================");
 
 // Lazy initializing Supabase to prevent crashing on empty env vars
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
@@ -17,14 +36,14 @@ let isMockMode = false;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !isUrlValid) {
   console.warn(
-    'Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are missing or set to placeholders. Running in mock simulation mode.'
+    'DIAGNOSTIC CRITICAL: Running in mock simulation mode because environment keys are missing or invalid.'
   );
   isMockMode = true;
 } else {
   try {
     supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } catch (error) {
-    console.error('Error initializing real Supabase client, resolving to mock:', error);
+    console.error('DIAGNOSTIC CRITICAL: Initialization failed, resolving to mock:', error);
     isMockMode = true;
   }
 }
@@ -61,13 +80,11 @@ const mockAuthService = {
     return { data: { session: null }, error: null };
   },
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
-    // Return unsubscribe function
     const handleStorageChange = () => {
       const saved = localStorage.getItem('nurture_mock_auth');
       callback(saved ? 'SIGNED_IN' : 'SIGNED_OUT', saved ? mockSession : null);
     };
     window.addEventListener('storage', handleStorageChange);
-    // Initial call
     const saved = localStorage.getItem('nurture_mock_auth');
     callback(saved ? 'SIGNED_IN' : 'SIGNED_OUT', saved ? mockSession : null);
     return {
@@ -81,14 +98,12 @@ const mockAuthService = {
     };
   },
   signInWithPassword: async ({ email, password }: any) => {
-    // Support testing with standard credentials demo accounts
     if (email === 'demo@nurture.edu.in' || email === 'student@nurture.edu.in' || (email.includes('@') && password.length >= 6)) {
       const customSession = {
         ...mockSession,
         user: { ...mockSession.user, email },
       };
       localStorage.setItem('nurture_mock_auth', JSON.stringify(customSession));
-      // Dispatch storage event to trigger listener
       window.dispatchEvent(new Event('storage'));
       return { data: { session: customSession, user: customSession.user }, error: null };
     }
