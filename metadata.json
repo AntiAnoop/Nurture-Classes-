@@ -1,0 +1,6 @@
+{
+  "name": "Nurture Coaching Classes",
+  "description": "Kandivali's premium coaching classes specializing in Maharashtra Board (SSC) for Class 8, 9, and 10 since 2009.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
