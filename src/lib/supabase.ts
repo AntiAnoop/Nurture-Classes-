@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // ==========================================
-// 1. BULLETPROOF ENVIRONMENT VARIABLE DUMP
+// 1. ENVIRONMENT VARIABLE EXTRACTION
 // ==========================================
 let SUPABASE_URL = '';
 let SUPABASE_ANON_KEY = '';
@@ -28,6 +28,7 @@ console.log("=== NURTURE CLIENT DIAGNOSTIC DUMP ===");
 console.log("URL Found:", SUPABASE_URL ? "YES (Starts with " + SUPABASE_URL.substring(0, 8) + ")" : "NO (EMPTY)");
 console.log("Key Found:", SUPABASE_ANON_KEY ? "YES" : "NO (EMPTY)");
 console.log("URL Format Valid:", isUrlValid);
+console.log("User Agent:", typeof navigator !== 'undefined' ? navigator.userAgent : 'NodeJS Context');
 console.log("======================================");
 
 // Lazy initializing Supabase to prevent crashing on empty env vars
@@ -41,7 +42,19 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !isUrlValid) {
   isMockMode = true;
 } else {
   try {
-    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Configured with deep network retry fallback values to prevent local ISP drop timeouts
+    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'supabase-js-client/v2',
+        }
+      }
+    });
   } catch (error) {
     console.error('DIAGNOSTIC CRITICAL: Initialization failed, resolving to mock:', error);
     isMockMode = true;
