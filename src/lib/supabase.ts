@@ -5,8 +5,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = ((import.meta as any).env.VITE_SUPABASE_URL as string) || '';
-const SUPABASE_ANON_KEY = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY as string) || '';
+// Clean standard way for Vite to read env variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 const isUrlValid = SUPABASE_URL.startsWith('http://') || SUPABASE_URL.startsWith('https://');
 
