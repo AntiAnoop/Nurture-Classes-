@@ -56,7 +56,7 @@ export default function ChapterView() {
   const nextChapter = activeChapterIndex < paper.chapters.length - 1 ? paper.chapters[activeChapterIndex + 1] : null;
 
   return (
-    <div className="min-h-screen md:h-screen flex md:overflow-hidden bg-[#F8F9FA] font-sans" id="classroom-portal-root">
+    <div className="h-screen flex overflow-hidden bg-[#F8F9FA] font-sans" id="classroom-portal-root">
       
       {/* 1. Desktop Left Sidebar Navigation */}
       <aside className="hidden md:flex md:flex-shrink-0 w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between h-full z-30">
@@ -137,7 +137,7 @@ export default function ChapterView() {
       </aside>
 
       {/* 2. Mobile Drawer Header */}
-      <div className="flex flex-col flex-1 md:overflow-hidden min-h-screen md:h-full">
+      <div className="flex flex-col flex-1 overflow-hidden h-full">
         <header className="md:hidden h-16 bg-white border-b border-[#E2E8F0] px-4 flex items-center justify-between z-40 shrink-0">
           <Link to="/dashboard" className="flex items-center gap-2.5">
             <div className="bg-[#1E3A8A] p-1 rounded text-white">
@@ -221,7 +221,7 @@ export default function ChapterView() {
         )}
 
         {/* 3. Main Split-Pane Classroom Content Area (Dual Pane on Desktop, stacked on mobile) */}
-        <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden bg-[#F8F9FA]">
           
           {/* Main Classroom Viewer (Left side 60% on desktop) */}
           <main className="flex-1 bg-white md:overflow-y-auto p-4 sm:p-6 lg:p-8 border-r border-[#E2E8F0]">

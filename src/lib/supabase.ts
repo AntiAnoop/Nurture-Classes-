@@ -8,13 +8,15 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = ((import.meta as any).env.VITE_SUPABASE_URL as string) || '';
 const SUPABASE_ANON_KEY = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY as string) || '';
 
+const isUrlValid = SUPABASE_URL.startsWith('http://') || SUPABASE_URL.startsWith('https://');
+
 // Lazy initializing Supabase to prevent crashing on empty env vars
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 let isMockMode = false;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !isUrlValid) {
   console.warn(
-    'Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are missing. Running in mock simulation mode.'
+    'Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are missing or set to placeholders. Running in mock simulation mode.'
   );
   isMockMode = true;
 } else {
