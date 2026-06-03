@@ -107,7 +107,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#F8F9FA] font-sans" id="dashboard-portal-root">
+    <div className="min-h-screen md:h-screen flex md:overflow-hidden bg-[#F8F9FA] font-sans" id="dashboard-portal-root">
       
       {/* 1. Desktop Left Sidebar Navigation */}
       <aside className="hidden md:flex md:flex-shrink-0 w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between h-full z-30">
@@ -181,7 +181,7 @@ export default function Dashboard() {
       </aside>
 
       {/* 2. Mobile collapsible navigation header */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 md:overflow-hidden min-h-screen md:h-full">
         {/* Top bar header for mobile controls */}
         <header className="md:hidden h-16 bg-white border-b border-[#E2E8F0] px-4 flex items-center justify-between z-40 shrink-0">
           <Link to="/dashboard" className="flex items-center gap-2.5">
@@ -262,7 +262,7 @@ export default function Dashboard() {
         )}
 
         {/* 3. Main Dashboard Overview Container */}
-        <main className="flex-1 bg-[#F8F9FA] overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 bg-[#F8F9FA] md:overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-5xl mx-auto flex flex-col gap-6" id="dashboard-content-grid">
             
             {/* Welcome Banner Card */}
