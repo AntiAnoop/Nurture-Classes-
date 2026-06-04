@@ -11,6 +11,8 @@ import {
 import { supabase } from '../lib/supabase';
 import { DashboardSubjectProgress } from '../types';
 import SubjectCard from '../components/SubjectCard';
+import { getSubjectPaper } from '../lib/curriculum';
+import { loadCompletedTopicIds, getSubjectProgressPercent } from '../lib/progress';
 
 // Full layout sidebar navigation items
 export const dashboardSidebarItems = [
@@ -40,6 +42,7 @@ export const dashboardSidebarItems = [
 export default function Dashboard() {
   const [studentEmail, setStudentEmail] = useState('student@nurture.edu.in');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [completedTopicIds, setCompletedTopicIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Route security: Check active session details on mount
@@ -55,56 +58,45 @@ export default function Dashboard() {
     checkSession();
   }, [navigate]);
 
+  // Synchronize student completed topics list on mount or email changes
+  useEffect(() => {
+    async function fetchProgress() {
+      if (studentEmail) {
+        const completions = await loadCompletedTopicIds(studentEmail);
+        setCompletedTopicIds(completions);
+      }
+    }
+    fetchProgress();
+  }, [studentEmail]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
 
-  // Hardcoded real-world Class 10 Syllabus paper progressions
-  const subjectProgressList: DashboardSubjectProgress[] = [
-    {
-      id: 'algebra',
-      name: 'Algebra',
-      paperName: 'Mathematics Part 1',
-      chapterCount: 6,
-      progress: 68,
-    },
-    {
-      id: 'geometry',
-      name: 'Geometry',
-      paperName: 'Mathematics Part 2',
-      chapterCount: 7,
-      progress: 52,
-    },
-    {
-      id: 'science-part-1',
-      name: 'Science Part 1',
-      paperName: 'Science Theory',
-      chapterCount: 9,
-      progress: 75,
-    },
-    {
-      id: 'science-part-2',
-      name: 'Science Part 2',
-      paperName: 'Science Practicals',
-      chapterCount: 7,
-      progress: 80,
-    },
-    {
-      id: 'history',
-      name: 'History',
-      paperName: 'History & Pol. Science',
-      chapterCount: 8,
-      progress: 45,
-    },
-    {
-      id: 'geography',
-      name: 'Geography',
-      paperName: 'Geography of India',
-      chapterCount: 6,
-      progress: 100, // Complete!
-    },
+  // Syllabus configuration mappings
+  const subjectsConfig = [
+    { id: 'algebra', name: 'Algebra', paperName: 'Mathematics Part 1' },
+    { id: 'geometry', name: 'Geometry', paperName: 'Mathematics Part 2' },
+    { id: 'science-part-1', name: 'Science Part 1', paperName: 'Science Theory' },
+    { id: 'science-part-2', name: 'Science Part 2', paperName: 'Science Practicals' },
+    { id: 'history', name: 'History', paperName: 'History & Pol. Science' },
+    { id: 'geography', name: 'Geography', paperName: 'Geography of India' },
   ];
+
+  // Dynamically calculated progres lists based on database completions
+  const subjectProgressList: DashboardSubjectProgress[] = subjectsConfig.map((sub) => {
+    const paper = getSubjectPaper(sub.id);
+    const chapterCount = paper ? paper.chapters.length : 0;
+    const progress = getSubjectProgressPercent(sub.id, completedTopicIds);
+    return {
+      id: sub.id,
+      name: sub.name,
+      paperName: sub.paperName,
+      chapterCount,
+      progress,
+    };
+  });
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#F8F9FA] font-sans" id="dashboard-portal-root">

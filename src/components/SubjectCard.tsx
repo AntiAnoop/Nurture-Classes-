@@ -7,6 +7,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, CheckCircle, ChevronRight } from 'lucide-react';
 import { DashboardSubjectProgress } from '../types';
+import { getSubjectPaper } from '../lib/curriculum';
 
 interface SubjectCardProps {
   subject: DashboardSubjectProgress;
@@ -14,6 +15,9 @@ interface SubjectCardProps {
 }
 
 export default function SubjectCard({ subject }: SubjectCardProps) {
+  const paper = getSubjectPaper(subject.id);
+  const firstChapterId = paper?.chapters[0]?.id || 'linear-equations';
+
   // SVG Circle measurements
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
@@ -79,7 +83,7 @@ export default function SubjectCard({ subject }: SubjectCardProps) {
       {/* Action link */}
       <div className="mt-5 pt-4 border-t border-[#E2E8F0]">
         <Link
-          to={`/dashboard/${subject.id}/linear-equations`} // defaults to first chapter or overview
+          to={`/dashboard/${subject.id}/${firstChapterId}`} // defaults to first chapter of the subject
           className="inline-flex w-full justify-between items-center text-sm font-semibold text-[#1E3A8A] group-hover:text-blue-900"
           id={`continue-learning-link-${subject.id}`}
         >

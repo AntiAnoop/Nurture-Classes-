@@ -9,27 +9,49 @@ import { Topic } from '../types';
 
 interface TopicAccordionProps {
   topics: Topic[];
+  completedTopicIds?: string[];
+  onToggleComplete?: (topicId: string, completed: boolean) => void;
 }
 
-export default function TopicAccordion({ topics }: TopicAccordionProps) {
+export default function TopicAccordion({ topics, completedTopicIds, onToggleComplete }: TopicAccordionProps) {
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(topics[0]?.id || null);
-  const [completedTopicIds, setCompletedTopicIds] = useState<Set<string>>(new Set());
+  const [localCompletedIds, setLocalCompletedIds] = useState<Set<string>>(new Set());
 
   const toggleExpand = (id: string) => {
     setExpandedTopicId(expandedTopicId === id ? null : id);
   };
 
+  const isCompleted = (id: string) => {
+    if (completedTopicIds) {
+      return completedTopicIds.includes(id);
+    }
+    return localCompletedIds.has(id);
+  };
+
+  const getCompletedCount = () => {
+    if (completedTopicIds) {
+      return topics.filter((t) => completedTopicIds.includes(t.id)).length;
+    }
+    return localCompletedIds.size;
+  };
+
   const toggleComplete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Avoid triggering accordion expand toggle
-    setCompletedTopicIds((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) {
-        updated.delete(id);
-      } else {
-        updated.add(id);
-      }
-      return updated;
-    });
+    const currentCompleted = isCompleted(id);
+    
+    if (onToggleComplete) {
+      onToggleComplete(id, !currentCompleted);
+    } else {
+      setLocalCompletedIds((prev) => {
+        const updated = new Set(prev);
+        if (updated.has(id)) {
+          updated.delete(id);
+        } else {
+          updated.add(id);
+        }
+        return updated;
+      });
+    }
   };
 
   return (
@@ -44,7 +66,7 @@ export default function TopicAccordion({ topics }: TopicAccordionProps) {
           <div className="flex flex-col">
             <h3 className="font-sans font-bold text-lg text-[#1E293B]">Chapter Topics & Notes</h3>
             <span className="text-[10px] text-[#475569] font-semibold uppercase tracking-wider mt-0.5">
-              {completedTopicIds.size} of {topics.length} topics finished
+              {getCompletedCount()} of {topics.length} topics finished
             </span>
           </div>
         </div>
@@ -57,7 +79,7 @@ export default function TopicAccordion({ topics }: TopicAccordionProps) {
       <div className="flex flex-col gap-3" id="accordion-topics-list">
         {topics.map((topic, index) => {
           const isExpanded = expandedTopicId === topic.id;
-          const isCompleted = completedTopicIds.has(topic.id);
+          const checked = isCompleted(topic.id);
 
           return (
             <div
@@ -77,10 +99,10 @@ export default function TopicAccordion({ topics }: TopicAccordionProps) {
                   <button
                     onClick={(e) => toggleComplete(topic.id, e)}
                     className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A8A] rounded-full p-0.5 transition-transform active:scale-90 shrink-0"
-                    title={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+                    title={checked ? 'Mark as incomplete' : 'Mark as complete'}
                     id={`topic-complete-toggle-${topic.id}`}
                   >
-                    {isCompleted ? (
+                    {checked ? (
                       <CheckCircle2 className="h-5 w-5 text-[#10B981] fill-[#10B981] fill-opacity-5" />
                     ) : (
                       <Circle className="h-5 w-5 text-slate-300 hover:text-[#10B981] hover:scale-105" />
@@ -117,13 +139,13 @@ export default function TopicAccordion({ topics }: TopicAccordionProps) {
                       <button
                         onClick={(e) => toggleComplete(topic.id, e)}
                         className={`text-xs font-semibold px-4 py-2 rounded-lg border transition-all ${
-                          isCompleted
+                          checked
                             ? 'bg-emerald-50 border-[#10B981] text-[#10B981] hover:bg-emerald-100'
                             : 'bg-[#1E3A8A] hover:bg-blue-900 border-transparent text-white shadow-xs'
                         }`}
                         id={`mark-complete-btn-${topic.id}`}
                       >
-                        {isCompleted ? 'Completed ✓' : 'Mark Topic as Complete'}
+                        {checked ? 'Completed ✓' : 'Mark Topic as Complete'}
                       </button>
                     </div>
                   </div>

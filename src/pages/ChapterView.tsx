@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getSubjectPaper, getChapter, curriculumData } from '../lib/curriculum';
+import { loadCompletedTopicIds, toggleTopicCompletion, getChapterCompletionStatus } from '../lib/progress';
 import VideoPlayer from '../components/VideoPlayer';
 import TopicAccordion from '../components/TopicAccordion';
 import { dashboardSidebarItems } from './Dashboard';
@@ -19,6 +20,7 @@ export default function ChapterView() {
   const { subject: subjectParam, chapter: chapterParam } = useParams<{ subject: string; chapter: string }>();
   const [studentEmail, setStudentEmail] = useState('student@nurture.edu.in');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [completedTopicIds, setCompletedTopicIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Route security: Check session details on mount
@@ -54,6 +56,22 @@ export default function ChapterView() {
   const activeChapterIndex = paper.chapters.findIndex(ch => ch.id === activeChapter.id);
   const prevChapter = activeChapterIndex > 0 ? paper.chapters[activeChapterIndex - 1] : null;
   const nextChapter = activeChapterIndex < paper.chapters.length - 1 ? paper.chapters[activeChapterIndex + 1] : null;
+
+  // Load user progress dynamically
+  useEffect(() => {
+    async function fetchProgress() {
+      if (studentEmail) {
+        const completions = await loadCompletedTopicIds(studentEmail);
+        setCompletedTopicIds(completions);
+      }
+    }
+    fetchProgress();
+  }, [studentEmail]);
+
+  const handleToggleComplete = async (topicId: string, completed: boolean) => {
+    const updated = await toggleTopicCompletion(studentEmail, subjectId, activeChapter.id, topicId, completed);
+    setCompletedTopicIds(updated);
+  };
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#F8F9FA] font-sans" id="classroom-portal-root">
@@ -284,7 +302,11 @@ export default function ChapterView() {
           <aside className="w-full md:w-[380px] bg-[#F8F9FA] md:overflow-y-auto p-4 sm:p-6 lg:p-8 shrink-0 border-t md:border-t-0 flex flex-col gap-6 text-left">
             
             {/* Render the full dynamic topic accordion guidelines */}
-            <TopicAccordion topics={activeChapter.topics} />
+            <TopicAccordion
+              topics={activeChapter.topics}
+              completedTopicIds={completedTopicIds}
+              onToggleComplete={handleToggleComplete}
+            />
 
             {/* Subject chapter playlists (LMS style list) */}
             <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col gap-4">
@@ -297,6 +319,12 @@ export default function ChapterView() {
               <div className="flex flex-col gap-1.5" id="chapter-playlists-scroll">
                 {paper.chapters.map((ch) => {
                   const isActive = ch.id === activeChapter.id;
+                  const { isComplete, completedCount, totalCount } = getChapterCompletionStatus(
+                    paper.id,
+                    ch.id,
+                    completedTopicIds
+                  );
+
                   return (
                     <Link
                       key={ch.id}
@@ -308,18 +336,26 @@ export default function ChapterView() {
                       }`}
                     >
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${
-                        isActive
+                        isComplete
+                          ? 'bg-emerald-500 text-white animate-fade-in'
+                          : isActive
                           ? 'bg-[#1E3A8A] text-white animate-pulse'
                           : 'bg-[#F8F9FA] text-[#1E3A8A]'
                       }`}>
-                        {ch.number}
+                        {isComplete ? '✓' : ch.number}
                       </div>
                       <div className="flex flex-col min-w-0 justify-center">
                         <span className="font-sans font-semibold text-xs text-[#1E293B] truncate leading-tight">
                           {ch.title}
                         </span>
-                        <span className="text-[10px] text-[#475569] font-medium tracking-wide mt-1">
-                          {ch.duration || '24:35'} · {ch.topics.length} topics
+                        <span className="text-[10px] font-medium tracking-wide mt-1">
+                          {isComplete ? (
+                            <span className="text-emerald-600 font-bold">✓ Fully Completed</span>
+                          ) : completedCount > 0 ? (
+                            <span className="text-blue-600 font-bold">{completedCount}/{totalCount} topics done</span>
+                          ) : (
+                            <span className="text-[#475569]">{ch.duration || '24:35'} · {ch.topics.length} topics</span>
+                          )}
                         </span>
                       </div>
                     </Link>
